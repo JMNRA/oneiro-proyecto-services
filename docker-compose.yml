@@ -1,0 +1,78 @@
+services:
+  emqx:
+    image: emqx:latest
+    container_name: emqx
+    restart: unless-stopped
+    user: "1000:1000"
+    volumes:
+      - ./data:/opt/emqx/data
+      - ./log:/opt/emqx/log
+    ports:
+      - 18083:18083
+      - 1883:1883
+      - 8083:8083
+    environment:
+
+      # Configuración general 
+
+      - TZ=${TZ}
+      - EMQX_NODE__COOKIE=${EMQX_ERLANG_COOKIE}
+      - EMQX_NODE_NAME=iolabs@node1.emqx.io
+      - EMQX_DASHBOARD__DEFAULT_PASSWORD=${EMQX_DASHBOARD_PASSWORD}
+      - EMQX_LISTENERS__TCP__DEFAULT__BIND=0.0.0.0:1883
+      - EMQX_LISTENERS__TCP__DEFAULT__MAX_CONNECTIONS=100
+      - EMQX_LISTENERS__TCP__DEFAULT__ENABLE_AUTHN=quick_deny_anonymous
+
+      # Configuración de autenticación 
+
+      - EMQX_AUTHENTICATION__1__MECHANISM=password_based
+      - EMQX_AUTHENTICATION__1__BACKEND=mongodb
+      - EMQX_AUTHENTICATION__1__ENABLE=true
+      - EMQX_AUTHENTICATION__1__MONGO_TYPE=single
+      - EMQX_AUTHENTICATION__1__SERVER=mongo:27017
+      - EMQX_AUTHENTICATION__1__DATABASE=${MONGO_EMQX_DATABASE}
+      - EMQX_AUTHENTICATION__1__POOL_SIZE=1
+      - EMQX_AUTHENTICATION__1__USERNAME=${MONGO_USERNAME}
+      - EMQX_AUTHENTICATION__1__PASSWORD=${MONGO_PASSWORD}
+      - EMQX_AUTHENTICATION__1__COLLECTION=${MONGO_AUTHN_COLLECTION}
+      - EMQX_AUTHENTICATION__1__PASSWORD_HASH_FIELD=${MONGO_AUTHN_PASSWORD_HASH_FIELD}
+      - EMQX_AUTHENTICATION__1__IS_SUPERUSER_FIELD=${MONGO_AUTHN_IS_SUPERUSER_FIELD}
+      - EMQX_AUTHENTICATION__1__PASSWORD_HASH_ALGORITHM__NAME=plain
+      - EMQX_AUTHENTICATION__1__PASSWORD_HASH_ALGORITHM__SALT_POSITION=disable
+      - EMQX_AUTHENTICATION__1__FILTER=${MONGO_AUTHN_FILTER}
+
+
+      # Configuración de autorización (ACL)
+
+      - EMQX_AUTHORIZATION__NO_MATCH=deny
+      - EMQX_AUTHORIZATION__SOURCES__1__TYPE=mongodb
+      - EMQX_AUTHORIZATION__SOURCES__1__ENABLE=true
+      - EMQX_AUTHORIZATION__SOURCES__1__USERNAME=${MONGO_USERNAME}
+      - EMQX_AUTHORIZATION__SOURCES__1__PASSWORD=${MONGO_PASSWORD}
+      - EMQX_AUTHORIZATION__SOURCES__1__MONGO_TYPE=single 
+      - EMQX_AUTHORIZATION__SOURCES__1__SERVER=mongo:27017
+      - EMQX_AUTHORIZATION__SOURCES__1__POOL_SIZE=8
+      - EMQX_AUTHORIZATION__SOURCES__1__DATABASE=${MONGO_EMQX_DATABASE}
+      - EMQX_AUTHORIZATION__SOURCES__1__COLLECTION=mqtt_acl
+      - EMQX_AUTHORIZATION__SOURCES__1__FILTER=${MONGO_AUTH_FILTER}
+
+
+    depends_on:
+      - mongo
+
+  mongo:
+    image: mongo:4.4
+    container_name: mongo_emqx
+    environment:
+      - "MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}"
+      - "MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}"
+    volumes:
+      - ./mongo_data:/data/db
+    ports:
+      - 27017:27017
+
+
+
+
+
+
