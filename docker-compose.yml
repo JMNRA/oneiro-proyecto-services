@@ -1,7 +1,7 @@
 services:
   emqx:
     image: emqx:latest
-    container_name: emqx
+    container_name: oneiro-test_emqx
     restart: unless-stopped
     user: "1000:1000"
     volumes:
@@ -62,7 +62,7 @@ services:
 
   mongo:
     image: mongo:4.4
-    container_name: mongo_emqx
+    container_name: oneiro-test_mongo
     environment:
       - "MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}"
       - "MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}"
